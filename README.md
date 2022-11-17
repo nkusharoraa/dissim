@@ -124,3 +124,28 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
     Returns:
         float: the additive inverse of accuracy to be minimized
     """
+    
+   ### Modules needed: numpy, math, sklearn, typing
+   
+## Problem of Interest
+
+A user in need of hyperparameter tuning, when searched in the docstring of the stochastic ruler class, the information about the input parameters needed in the constructor is clearly conveyed. The user then works with the development of a python dictionary with the hyperparameter names (referred to as HP throughout in the pictorial representation) as keys and lists as their values. 
+The creation of an object gives access to the methods named above. The function call to fit gives us the optimal hyperparameter set and the corresponding accuracy value depending on the data and the model input as well.
+Adequate Exceptions are thrown.
+
+![Screenshot 2022-11-17 235657](https://user-images.githubusercontent.com/59050030/202527968-d711c962-11f6-4330-a340-7adb6a65fc5a.jpg)
+
+## Instantiation and Function Calls
+As the object is created and used to call the fit method, it first checks if the format is correct and then calls the SR_Algo method. With a return type a union of dictionary and float, the method first makes an initial choice of hyperparameters from the given search space and then the following steps followed (as described in the Stochastic Ruler Algorithm):
+Step 0: Select a starting point Xo E S and let k = 0.
+Step 1: Given xk = x, choose a candidate zk from N(x) randomly
+Step 2: Given zk = z, draw a sample h(z) from H(z). Then draw a sample u from U(a, b). If h(z) > u, then let X(k+1) = Xk and go to Step 3.  Otherwise, draw another sample h(z) from H(z) and draw another sample u from U(a, b). If h(z) > u, then let X(k+1) = Xk and go to Step3. Otherwise, continue to draw and compare.
+If all Mk tests, h(z) > u, fail, then accept the candidate zk and Set xk+1 = zk = Z.
+Step3: k = k+1
+Here, a call to Mk is made at every k, which has an integer return type (floored). Calls to the run function are made at every zk (neighbour candidate solution) which returns the 1 - accuracy value to solve the minimization problem. Comparison with the uniform random variable theta(0,1) is done using NumPy.
+
+![Screenshot 2022-11-17 235832](https://user-images.githubusercontent.com/59050030/202528306-affd4508-0e4d-4be3-aed9-44518c21895c.jpg)
+
+![Screenshot 2022-11-17 235859](https://user-images.githubusercontent.com/59050030/202528395-11570650-7a18-4399-9d15-8ff23bed5400.jpg)
+
+![Screenshot 2022-11-17 235934](https://user-images.githubusercontent.com/59050030/202528545-790194d1-6ceb-48c8-8b32-c9f3dce19953.jpg)
