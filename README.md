@@ -1,9 +1,50 @@
 # HPTuningSRPackage
 Implementation of the Stochastic Ruler Method for Discrete Simulation Optimization for Tuning ML Method Hyperparameters
 
-## Documentation
+## Sample Implementation
+```
+import pandas as pd
+df = pd.read_csv('data.csv')
+df = df.drop([df.columns[-1],df.columns[0]],axis = 1)
+df['result'] = df['diagnosis']
+df = df.drop(['diagnosis'],axis = 1)
+df = pd.get_dummies(df,columns = ['result'], drop_first = True)
+df = df.rename(columns = {df.columns[-1]:'result'})
+y = df['result'].to_numpy()
+X = df.to_numpy()[:,:-1]
+ANNspace = {'num_hidden_layers' : [1,2],
+            'hidden_layer_0' : [2,4,6,8,10],
+            'hidden_layer_1' : [1,2,3,4,5],
+            'learning_rate' : [0.001,0.004,0.007,0.01],
+            'solver' : ['adam'] }
+SVMspace = {'kernel' : ["rbf","linear"],
+            'gamma' : [0.001, 0.01, 0.1, 0.5, 1, 10, 30, 50, 80, 100],
+            'C' : [0.01, 0.1, 1, 10, 100, 300, 500, 700, 800, 1000]}
+RFCspace = {'max_depth' :[1,3,5,8], 
+            'criterion':['gini', 'entropy'], 
+            'n_estimators':[10,30,50,80,100]}
+GBCspace = {'n_estimators':[10,30,50,80,100], 
+            'learning_rate': [0.001,0.004,0.007,0.01], 
+            'max_depth':[1,3,5,8]}
+KNNspace ={ 'n_neighbors' : [5,7,9,11,13,15],
+             'weights' : ['uniform','distance'],
+             'metric' : ['minkowski','euclidean','manhattan']}
 
-### class stochastic_ruler():
+ANNsr = stochastic_ruler(ANNspace,'MLP',100)
+SVMsr = stochastic_ruler(SVMspace,'SVM',100)
+RFCsr = stochastic_ruler(RFCspace, 'RFC', 100)
+GBCsr = stochastic_ruler(GBCspace, 'GBC',100)
+KNNsr = stochastic_ruler(KNNspace , 'KNN' ,100)
+
+z_vals1,opt_x1 = ANNsr.fit(X,y)
+z_vals2,opt_x2 = SVMsr.fit(X,y)
+z_vals3,opt_x3 = RFCsr.fit(X,y)
+z_vals4,opt_x4 = GBCsr.fit(X,y)
+z_vals5,opt_x5 = KNNsr.fit(X,y)
+```
+## Documentation
+```
+class stochastic_ruler():
   
   """
   The class definition for the implementation of the Stochastic Ruler Random Search Method;
@@ -13,7 +54,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
   """
 
  
-  ### def __init__(self, space:dict,model_type:str,maxevals:int = 100):
+  def __init__(self, space:dict,model_type:str,maxevals:int = 100):
     
     """The constructor for declaring the instance variables in the Stochastic Ruler Random Search Method
  
@@ -25,7 +66,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
         maxevals (int, optional): maximum number of evaluations for the performance measure; Defaults to 100.
     """
 
-### def help_neigh_struct(self)->dict:
+   def help_neigh_struct(self)->dict:
     
     """The helper method for creating a dictionary containing the position of the respective hyperparameter value in the enumerated dictionary of space
  
@@ -33,7 +74,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
         dict: hyperpamater name concatenated with its value ->key
               zero-based index position of the hyperparameter value in self.space (the hype) -> value
     """
-### def random_pick_from_neighbourhood_structure(self, initial_choice:dict)->dict:
+    def random_pick_from_neighbourhood_structure(self, initial_choice:dict)->dict:
     
     """The method for picking a random hyperparameter set, in the form of a dictionary
  
@@ -43,8 +84,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
     Returns:
         dict: a randomly picked set of hyperparameters written as a dictionary
     """
-
-### def ModelFunc(self,neigh:dict):
+    def ModelFunc(self,neigh:dict):
     
     """ The function for calling the models from sklearn depending on the self.model_type string and the neighbourhood structure
  
@@ -57,7 +97,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
         MODEL: the respective method called from sklearn with the chosen hyperparameters
     """
 
-### def Mf(self,k:int)->int:
+  def Mf(self,k:int)->int:
     
     """The method for representing the maximum number of failures allowed while iterating for the kth step in the Stochastic Ruler Method
         In this case, we let Mk = floor(log_5 (k + 10)) for all k; this choice of the sequence {Mk} satisfies the guidelines specified by Yan and Mukai (1992)
@@ -68,7 +108,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
         int: the maximum number for the number of iterations
     """
 
-### def SR_Algo(self,X:np.ndarray,y:np.ndarray) -> Union[float,dict]:
+  def SR_Algo(self,X:np.ndarray,y:np.ndarray) -> Union[float,dict]:
     
     """The method that uses the Stochastic Ruler Method (Yan and Mukai 1992)
        Step 0: Select a starting point Xo E S and let k = 0.
@@ -88,7 +128,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
         Union[float,dict]: the minimum value of 1-accuracy and the corresponding optimal hyperparameter set
     """
 
-### def data_preprocessing(self,X:np.ndarray,y:np.ndarray)->Union[list, list, list, list]:
+  def data_preprocessing(self,X:np.ndarray,y:np.ndarray)->Union[list, list, list, list]:
     
     """The method for preprocessing and dividing the data into train and test using the train_test_split from sklearn, model_selection
  
@@ -100,7 +140,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
         Union[list, list, list, list]: returns X_train,X_test,y_train,y_test
     """
 
-### def fit(self,X:np.ndarray,y:np.ndarray)->Union[float,dict]:
+  def fit(self,X:np.ndarray,y:np.ndarray)->Union[float,dict]:
     
     """The method to find the optimal set of hyperparameters employing Stochastic Ruler method
  
@@ -112,7 +152,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
         Union[float,dict]: the minimum value of 1-accuracy and the corresponding optimal hyperparameter set
     """
 
-  ### def run(self, neigh:dict,X:np.ndarray,y:np.ndarray)->float:
+  def run(self, neigh:dict,X:np.ndarray,y:np.ndarray)->float:
     
     """The (helper) method that instantiates the model function called from sklearn and returns the additive inverse of accuracy to be minimized
  
@@ -124,7 +164,7 @@ Implementation of the Stochastic Ruler Method for Discrete Simulation Optimizati
     Returns:
         float: the additive inverse of accuracy to be minimized
     """
-    
+```
    ### Modules needed: numpy, math, sklearn, typing
    
 ## Problem of Interest
