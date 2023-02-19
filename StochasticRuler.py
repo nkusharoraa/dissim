@@ -97,7 +97,20 @@ class stochastic_ruler():
       MODEL =  KNeighborsClassifier( n_neighbors =neigh['n_neighbors'],weights = neigh['weights'],metric= neigh['metric'])
     return MODEL
 
- 
+ def det_a_b(self,domain,max_eval,X,y):
+    max_iter = (max_eval)//len(domain)
+    maxm = -1*math.inf
+    minm = math.inf
+    neigh={}
+    for dom in domain:
+      neigh[dom] = np.random.choice(domain[dom])
+    for i in range(max_iter):
+      neigh = self.random_pick_from_neighbourhood_structure(neigh)
+      val = self.run(neigh, X, y)
+      minm = min(minm,val)
+      maxm = max(maxm,val)
+    return (minm/2, 3*maxm/2)
+  
   def Mf(self,k:int)->int:
     """The method for represtenting the maximum number of failures allowed while iterating for the kth step in the Stochastic Ruler Method
         In this case, we let Mk = floor(log_5 (k + 10)) for all k; this choice of the sequence {Mk} satisfies the guidelines specified by Yan and Mukai (1992)
@@ -136,6 +149,7 @@ class stochastic_ruler():
     # step 0: Select a starting point x0 in S and let k = 0
     k = 1
     x_k = initial_choice_HP
+    a, b = self.det_a_b(self.space,self.maxevals//10,X,y)
     # step 0 ends here 
     while(k<self.maxevals+1):
       # print("minz"+str(minh_of_z))
@@ -146,7 +160,7 @@ class stochastic_ruler():
       iter = self.Mf(k)
       for i in range(iter):
         h_of_z = self.run(zk,X,y)
-        u = np.random.uniform(0,1) # Then draw a sample u from U(a, b)
+        u = np.random.uniform(a,b) # Then draw a sample u from U(a, b)
 
         if(h_of_z>u): # If h(z) > u, then let xk+1 = xk and go to step 3.
           k+=1 
