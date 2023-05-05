@@ -9,6 +9,29 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 from typing import Union
+import tracemalloc
+import pandas as pd
+import dask.dataframe as dd
+import time
+import random
+import math
+
+
+def tracing_start():
+    """
+    Starts tracing of memory allocation using tracemalloc.
+    """
+    tracemalloc.stop()
+    print("nTracing Status : ", tracemalloc.is_tracing())
+    tracemalloc.start()
+    print("Tracing Status : ", tracemalloc.is_tracing())
+def tracing_mem():
+    """
+    Prints the peak memory usage.
+    """
+    first_size, first_peak = tracemalloc.get_traced_memory()
+    peak = first_peak/(1024*1024)
+    print("Peak Size in MB - ", peak)
 
 class stochastic_ruler():
   """
@@ -17,7 +40,7 @@ class stochastic_ruler():
   "Discrete stochastic optimization via a modification of the stochastic ruler method."
   Proceedings Winter Simulation Conference. IEEE, 1996.
   """
-  def __init__(self, space:dict,model_type:str,maxevals:int = 100):
+  def __init__(self, space:dict,model_type:str,maxevals:int = 100, prob_type = 'hyp_opt', func=None):
     """The constructor for declaring the instance variables in the Stochastic Ruler Random Search Method 
 
     Args:
@@ -28,11 +51,13 @@ class stochastic_ruler():
         maxevals (int, optional): maximum number of evaluations for the performance measure; Defaults to 100.
     """
     self.space = space
-    self.model_type = model_type
+    self.prob_type = prob_type # hyperparam opt (hyp_opt), optimal solution (opt_sol)
+    self.model_type = model_type #for already implemented models in scipy or userdefined
     self.data = None
     self.maxevals = maxevals
     self.initial_choice_HP = None
     self.Neigh_dict = self.help_neigh_struct()
+    self.func = func
 
   def help_neigh_struct(self)->dict:
     """The helper method for creating a dictionary containing the position of the respective hyperparameter value in the enumered dictionary of space
@@ -60,7 +85,7 @@ class stochastic_ruler():
 
     set_hp = {}
     for hp in initial_choice:
-      key = hp + "_" + str(initial_choice[hp])
+      key = str(hp) + "_" + str(initial_choice[hp])
       hp_index = self.Neigh_dict[key]
       idx = np.random.randint(-1,2)
       length  = len(self.space[hp]) 
@@ -95,22 +120,25 @@ class stochastic_ruler():
       MODEL = GradientBoostingClassifier(n_estimators=neigh['n_estimators'], learning_rate=neigh['learning_rate'],max_depth=neigh['max_depth'])
     if(self.model_type == 'KNN'):
       MODEL =  KNeighborsClassifier( n_neighbors =neigh['n_neighbors'],weights = neigh['weights'],metric= neigh['metric'])
+    if(self.model_type == 'user_defined'):
+      MODEL = self.func
     return MODEL
 
- def det_a_b(self,domain,max_eval,X,y):
+  
+  def det_a_b(self,domain,max_eval,X = None,y =None):
     max_iter = (max_eval)//len(domain)
     maxm = -1*math.inf
     minm = math.inf
     neigh={}
-    for dom in domain:
-      neigh[dom] = np.random.choice(domain[dom])
     for i in range(max_iter):
-      neigh = self.random_pick_from_neighbourhood_structure(neigh)
-      val = self.run(neigh, X, y)
+      for dom in domain:
+        neigh[dom] = np.random.choice(domain[dom])
+      val = self.run(neigh,neigh, X, y)
       minm = min(minm,val)
       maxm = max(maxm,val)
-    return (minm/2, 3*maxm/2)
-  
+    return (minm, maxm)
+
+
   def Mf(self,k:int)->int:
     """The method for represtenting the maximum number of failures allowed while iterating for the kth step in the Stochastic Ruler Method
         In this case, we let Mk = floor(log_5 (k + 10)) for all k; this choice of the sequence {Mk} satisfies the guidelines specified by Yan and Mukai (1992)
@@ -122,7 +150,7 @@ class stochastic_ruler():
     """
     return int(math.log(k+10,math.e)/math.log(5,math.e))
 
-  def SR_Algo(self,X:np.ndarray,y:np.ndarray) -> Union[float,dict]:
+  def SR_Algo(self,X:np.ndarray = None,y:np.ndarray = None) -> Union[float,dict,float,float]:
     """The method that uses the Stochastic Ruler Method (Yan and Mukai 1992)
        Step 0: Select a starting point Xo E S and let k = 0.
        Step 1: Given xk = x, choose a candidate zk from N(x) randomly
@@ -144,24 +172,29 @@ class stochastic_ruler():
     initial_choice_HP = {}
     for i in self.space:
       initial_choice_HP[i] = self.space[i][0]
-    minh_of_z = 1
-    opt_x = []
+    
+    
     # step 0: Select a starting point x0 in S and let k = 0
     k = 1
     x_k = initial_choice_HP
+    opt_x = x_k
     a, b = self.det_a_b(self.space,self.maxevals//10,X,y)
+    # print(a,b)
+    minh_of_z = b
     # step 0 ends here 
     while(k<self.maxevals+1):
       # print("minz"+str(minh_of_z))
       # step 1:  Given xk = x, choose a candidate zk from N(x)
+
       zk = self.random_pick_from_neighbourhood_structure(x_k)
       # step 1 ends here
       # step 2: Given zk = z, draw a sample h(z) from H(z)
       iter = self.Mf(k)
       for i in range(iter):
-        h_of_z = self.run(zk,X,y)
+        h_of_z = self.run(zk,zk,X,y)
+        
         u = np.random.uniform(a,b) # Then draw a sample u from U(a, b)
-
+        
         if(h_of_z>u): # If h(z) > u, then let xk+1 = xk and go to step 3.
           k+=1 
           if(h_of_z<minh_of_z):
@@ -177,7 +210,7 @@ class stochastic_ruler():
             opt_x = zk
       # step 2 ends here
       # step 3: k = k+1
-    return minh_of_z,opt_x
+    return minh_of_z,opt_x,a,b
 
   def data_preprocessing(self,X:np.ndarray,y:np.ndarray)->Union[list, list, list, list]:
     """The method for preprocessing and dividing the data into train and test using the train_test_split from sklearn,model_selection
@@ -194,7 +227,7 @@ class stochastic_ruler():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     return X_train,X_test,y_train,y_test
 
-  def fit(self,X:np.ndarray,y:np.ndarray)->Union[float,dict]:
+  def fit(self,X:np.ndarray, y:np.ndarray)->Union[float,dict]: #for optimal hyperparams
     """The method to find the optimal set of hyperparameters employing Stochastic Ruler method
 
     Args:
@@ -204,10 +237,27 @@ class stochastic_ruler():
     Returns:
         Union[float,dict]: the minimum value of 1-accuracy and the corresponding optimal hyperparameter set
     """
-    self.data = {'X':X,'y':y}
-    return self.SR_Algo(X,y)
+    tracing_start()
+    start = time.time()
     
-  def run(self, neigh:dict,X:np.ndarray,y:np.ndarray)->float:
+    self.data = {'X':X,'y':y}
+    result = self.SR_Algo(X,y)
+    end = time.time()
+    print("time elapsed {} milli seconds".format((end-start)*1000))
+    tracing_mem()
+    return result
+  
+  def optsol(self):
+    tracing_start()
+    start = time.time()
+    result = self.SR_Algo()
+    
+    end = time.time()
+    print("time elapsed {} milli seconds".format((end-start)*1000))
+    tracing_mem()
+    return result
+
+  def run(self, opt_x ,neigh:dict,X:np.ndarray = None ,y:np.ndarray = None)->float:
     """The (helper) method that instantiates the model function called from sklearn and returns the additive inverse of accuracy to be minimized
 
     Args:
@@ -219,9 +269,17 @@ class stochastic_ruler():
         float: the additive inverse of accuracy to be minimized
     """
     ModelFun = self.ModelFunc(self.random_pick_from_neighbourhood_structure(neigh))
-    X_train,X_test,y_train,y_test = self.data_preprocessing(X,y)
-    ModelFun.fit(X_train,y_train)
-    y_pred = ModelFun.predict(X_test)
-    acc = ModelFun.score(X_test,y_test)
+    if self.prob_type == 'hyp_opt':
+      X_train,X_test,y_train,y_test = self.data_preprocessing(X,y)
+      ModelFun.fit(X_train,y_train)
+      y_pred = ModelFun.predict(X_test)
+      acc = ModelFun.score(X_test,y_test)
+      return 1-acc
+    if self.prob_type== 'opt_sol':
+      
+      funcval = self.func(opt_x)
+      
+      # print(funcval,opt_x)
+      return funcval
     # print("acc" + str(acc))
-    return 1-acc
+    
