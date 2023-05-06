@@ -2,7 +2,7 @@ import math as mt
 import numpy as np
 class AHA():
   def __init__(self, func,global_domain):
-    """Initializes the AHA class instance.
+    """Constructor method that initializes the instance variables of the class AHA
 
     Args:
       func (function): A function that takes in a list of integers and returns a float value representing the objective function.
@@ -15,7 +15,8 @@ class AHA():
     #self.initial_choice = self.sample(global_domain)
     
   def sample(self,domain):
-    """Samples a point from the given domain.
+    """A helper method that samples a point from the given domain. 
+      It returns a list of integers representing a point in the search space.
 
     Args:
         domain (list of lists): A list of intervals (list of two integers) to sample from.
@@ -30,8 +31,8 @@ class AHA():
     
     return x
 
-  def ak(self,iters):
-    """Computes the value of the parameter 'a' for the given iteration.
+  def ak(self,iters : int):
+    """ A method that computes the value of the parameter 'a' for the given iteration.
 
     Args:
         iters (int): The current iteration number.
@@ -153,4 +154,84 @@ class AHA():
 
 
     return self.x_star
-  
+  def AHAalgoglobal(self,iter,max_k,m):
+    """ Runs the AHA algorithm for global optimization.
+
+    Args:
+        iter (int): The number of iterations to run.
+    max_k (int): The maximum number of iterations to run for each iteration of the global search.
+    m (int): The number of random samples to generate at each iteration.
+
+    Returns:
+        tuple: A tuple containing the best solution found and its corresponding objective value.
+    """
+    all_sols = []
+    best_sol = None
+    best_val = None
+
+    # for i in range(iter):
+    #   new_dom = []
+    #   for dom in self.global_domain:
+    #     if(dom[0]!=dom[1]):
+    #       val1 = np.random.randint(dom[0],dom[1]+1)
+    #       val2 = np.random.randint(dom[0],dom[1]+1)
+    #       while(val1==val2):
+    #         val2 = np.random.randint(dom[0],dom[1]+1)
+    #       if(val1<val2):
+    #         new_dom.append([val1,val2])
+    #       else:
+    #         new_dom.append([val2,val1])
+    #     else:
+    #       new_dom.append(dom)
+
+    for i in range(iter):
+      new_dom = []
+      for dom in self.global_domain:
+        D = (dom[1] - dom[0])
+        if(D>=2 and D<=20):
+          K=3
+        elif(D>20 and D<=50):
+          K=5
+        elif(D>50 and D<=100):
+          K = 10
+        elif(D>100):
+          K = 50
+
+
+
+        if(dom[1]-dom[0]>2):
+          step = (dom[1]-dom[0])//K
+          val1 = np.random.randint(dom[0],dom[1]+1)
+          if(val1+step+1<dom[1]):
+            val2 = np.random.randint(val1+1,val1+step+1)
+          else:
+            val2 = np.random.randint(val1-step-1,val1)
+          if(val1<val2):
+            new_dom.append([val1,val2])
+          else:
+            new_dom.append([val2,val1])
+
+
+        elif(dom[0]!=dom[1]):
+          val1 = np.random.randint(dom[0],dom[1]+1)
+          val2 = np.random.randint(dom[0],dom[1]+1)
+          while(val1==val2):
+            val2 = np.random.randint(dom[0],dom[1]+1)
+          if(val1<val2):
+            new_dom.append([val1,val2])
+          else:
+            new_dom.append([val2,val1])
+        else:
+          new_dom.append(dom)
+
+      # print(new_dom)
+      x0 = self.sample(new_dom)
+      solx = self.AHAalgolocal(max_k,m,new_dom,x0)
+
+      valx = self.func(solx[-1])
+      if(best_sol == None or valx<best_val):
+        best_sol = solx[-1]
+        best_val = valx
+      all_sols.append(solx[-1])
+
+    return all_sols,best_sol,best_val

@@ -1,0 +1,9 @@
+LICENSE.txt
+README.md
+setup.py
+dissim/__init__.py
+dissim.egg-info/PKG-INFO
+dissim.egg-info/SOURCES.txt
+dissim.egg-info/dependency_links.txt
+dissim.egg-info/requires.txt
+dissim.egg-info/top_level.txt
