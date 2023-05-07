@@ -1,4 +1,4 @@
-Copyright (c) 2023, Department of Mechanical Engineering, Indian Institute of Technology Delhi.
+Copyright (c) 2023, Ankush Arora, Department of Mechanical Engineering, Indian Institute of Technology Delhi.
 All rights reserved.
 
 
