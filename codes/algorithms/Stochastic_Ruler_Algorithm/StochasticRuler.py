@@ -126,8 +126,8 @@ class stochastic_ruler():
 
   
   def det_a_b(self,domain,max_eval,X = None,y =None):
-    """Computes the minimum and maximum determinant of the Hessian matrix of the function represented by self, 
-    using a Monte Carlo method with random samples from the given domain.
+    """Computes the minimum and maximum values of the function represented by self, 
+    using Stochastic Ruler with random samples from the given domain. This gives us (a,b) of the stochastic ruler
 
     Args:
         domain (dict): A dictionary that maps the names of the variables of the function represented by self to their domains, 
@@ -139,8 +139,7 @@ class stochastic_ruler():
         y (array-like or None, optional): An array of target values to pass to the function represented by self. Defaults to None.
 
     Returns:
-        tuple: A tuple of two floats representing the minimum and maximum determinant of the Hessian matrix of the function 
-        represented by self, computed using the Monte Carlo method with random samples from the given domain.
+        tuple: This gives us (a,b) of the stochastic ruler
     """
     max_iter = (max_eval)//len(domain)
     maxm = -1*math.inf
