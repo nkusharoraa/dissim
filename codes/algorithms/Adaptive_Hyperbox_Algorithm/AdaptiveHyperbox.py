@@ -1,5 +1,20 @@
 import math as mt
 import numpy as np
+import tracemalloc
+import pandas as pd
+import dask.dataframe as dd
+import time
+import random
+
+def tracing_start():
+    tracemalloc.stop()
+    print("nTracing Status : ", tracemalloc.is_tracing())
+    tracemalloc.start()
+    print("Tracing Status : ", tracemalloc.is_tracing())
+def tracing_mem():
+    first_size, first_peak = tracemalloc.get_traced_memory()
+    peak = first_peak/(1024*1024)
+    print("Peak Size in MB - ", peak)
 class AHA():
   def __init__(self, func,global_domain):
     """Constructor method that initializes the instance variables of the class AHA
@@ -99,6 +114,11 @@ class AHA():
     """
     #initialisation
     # print(x0)
+    tracing_start()
+    start = time.time()
+    
+    
+    
     self.x_star.append(x0)
     epsilon = []
     epsilon.append([x0])
@@ -152,7 +172,9 @@ class AHA():
       self.x_star.append(x_star_k)
       epsilon.append(epsilonk)
 
-
+    end = time.time()
+    print("time elapsed {} milli seconds".format((end-start)*1000))
+    tracing_mem()
     return self.x_star
   def AHAalgoglobal(self,iter,max_k,m):
     """ Runs the AHA algorithm for global optimization.
