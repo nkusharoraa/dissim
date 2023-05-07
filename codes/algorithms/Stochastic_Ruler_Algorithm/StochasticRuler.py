@@ -263,6 +263,11 @@ class stochastic_ruler():
     return result
   
   def optsol(self):
+    """this gives the optimal solution for the problem using SR_Algo() method
+
+    Returns:
+        Union [float, dict]: the optimal solution represented as a dictionary and the corresponding value in float/int 
+    """
     tracing_start()
     start = time.time()
     result = self.SR_Algo()
