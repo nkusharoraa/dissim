@@ -6,5 +6,5 @@ You are allowed to redistribute and use this software in its source or binary fo
 
 If you distribute the source code, you must include the original copyright notice, a list of conditions, and the disclaimer provided above.
 If you distribute the binary form, you must include the original copyright notice, a list of conditions, and the disclaimer provided above in the documentation and any other materials that come with the distribution.
-You cannot use the names of the NumPy Developers or any contributors to endorse or promote products derived from this software without specific prior written permission.
+You cannot use the names of the Developers or any contributors to endorse or promote products derived from this software without specific prior written permission.
 This software is provided "as is" by the copyright holders and contributors, and they make no express or implied warranties, including but not limited to warranties of merchantability and fitness for a particular purpose. The copyright holders and contributors shall not be liable for any direct, indirect, incidental, special, exemplary, or consequential damages arising from the use of this software, regardless of the theory of liability (contract, strict liability, or tort), even if they have been advised of the possibility of such damages.
