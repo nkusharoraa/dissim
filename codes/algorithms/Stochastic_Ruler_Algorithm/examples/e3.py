@@ -26,3 +26,4 @@ def ex3(x):
 dom = {'x': [i for i in range(1,11)]}
 
 sr_userdef2 = dissim.stochastic_ruler(dom,'user_defined', 1000, 'opt_sol', ex3)
+print(sr_userdef2.optsol())
