@@ -61,7 +61,7 @@
 │   ├── dependency_links.txt
 │   ├── requires.txt
 │   └── top_level.txt
-├── dissim.whl
+├── dissim-0.1.1-py3-none-any.whl
 ├── dist
 │   ├── dissim-0.1-py3-none-any.whl
 │   ├── dissim-0.1.1-py3-none-any.whl
